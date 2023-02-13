@@ -43,7 +43,9 @@ fn main() -> Result<(), io::Error>{
         false => WalkDir::new(&command_config.path()).min_depth(1).max_depth(1)
     };
 
-    let files = files.into_iter().map(|x| File::new(&x.unwrap())).collect::<Vec<_>>();
+    let files = files.into_iter().filter(
+    |x| x.as_ref().unwrap().metadata().unwrap().is_file()
+    ).map(|x| File::new(&x.unwrap())).collect::<Vec<_>>();
 
     files.into_iter().for_each(|f| println!("{:#?}\n", f));
     println!("{command_config:?}");
