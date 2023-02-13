@@ -1,0 +1,15 @@
+[package]
+name = "fws-rs"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+serde_json = "1.0.93"
+structopt = "0.3.26"
+walkdir = "2.3.2"
+
+[dependencies.serde]  # Add serde in its own section.
+features = ["derive"] # We'll need the derive feature.
+version = "1.0.152"
