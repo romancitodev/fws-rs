@@ -1,0 +1,5 @@
+{
+    "watch": ".\\src",
+    "exec": "python main.py",
+    "recursive": true
+}
