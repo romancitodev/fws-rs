@@ -1,7 +1,9 @@
+use crate::file::File;
+
+#[derive(Debug)]
 #[allow(dead_code)]
 pub enum EventFiles {
-    Created,
-    Modified,
-    Eliminated,
-    None
+    Created(File),
+    Modified(File),
+    Eliminated(File),
 }
