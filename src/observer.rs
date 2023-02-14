@@ -23,9 +23,9 @@ impl Observer {
         Observer { config, files }
     }
 
-    pub fn iter_events(&self) -> impl Iterator<Item = EventFiles> + '_ {
+    pub fn iter_events(&mut self) -> impl Iterator<Item = EventFiles> + '_ {
         let interval = Duration::from_millis(500);
-        let mut last_files = self.files.clone();
+        let last_files = self.files.clone();
         std::iter::from_fn(move || {
             let current_files = match self.config.is_recursive() {
                 true => WalkDir::new(self.config.path()).min_depth(1),
@@ -51,10 +51,9 @@ impl Observer {
                     events.push(EventFiles::Eliminated(last_file.clone()));
                 }
             }
-            println!("{:?}", events);
             std::thread::sleep(interval);
             if !events.is_empty() {
-                last_files = current_files;
+                self.files = current_files;
                 Some(events.remove(0))
             } else {
                 None
