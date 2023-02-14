@@ -1,19 +1,19 @@
+use serde::{Deserialize, Serialize};
 use std::convert::From;
 use std::error::Error;
-use serde::{Serialize, Deserialize};
-use std::{path::PathBuf, fs::File};
+use std::{fs::File, path::PathBuf};
 
 #[derive(Debug, Clone)]
 pub enum CheckMode {
     Recursive,
-    NonRecursive
+    NonRecursive,
 }
 
 #[derive(Serialize, Deserialize, Clone)]
 struct JsonFile {
     watch: PathBuf,
     exec: String,
-    recursive: bool
+    recursive: bool,
 }
 
 #[derive(Debug)]
@@ -33,12 +33,12 @@ impl std::fmt::Display for ConfigError {
 
 impl Error for ConfigError {}
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 #[allow(dead_code)]
 pub struct Config {
     path: PathBuf,
     exec: String,
-    recursive: CheckMode
+    recursive: CheckMode,
 }
 
 #[allow(dead_code)]
@@ -46,9 +46,13 @@ impl Config {
     pub fn new(path: PathBuf, exec: String, recursive: bool) -> Self {
         let recursive = match recursive {
             true => CheckMode::Recursive,
-            false => CheckMode::NonRecursive
+            false => CheckMode::NonRecursive,
         };
-        Config { path, exec, recursive }
+        Config {
+            path,
+            exec,
+            recursive,
+        }
     }
 
     pub fn path(self: &Self) -> &PathBuf {
@@ -62,7 +66,7 @@ impl Config {
     pub fn is_recursive(self: &Self) -> bool {
         match &self.recursive {
             CheckMode::Recursive => true,
-            CheckMode::NonRecursive => false
+            CheckMode::NonRecursive => false,
         }
     }
 
@@ -73,6 +77,10 @@ impl Config {
     pub fn load_from_file(path: &PathBuf) -> Result<Self, Box<dyn Error>> {
         let file = File::open(path)?;
         let config: JsonFile = serde_json::from_reader(file)?;
-        Ok(Config::new(PathBuf::from(&config.watch), config.exec, config.recursive))
+        Ok(Config::new(
+            PathBuf::from(&config.watch),
+            config.exec,
+            config.recursive,
+        ))
     }
 }
