@@ -12,6 +12,7 @@ use events::EventFiles;
 use observer::Observer;
 use std::{path::PathBuf, process::exit};
 use structopt::StructOpt;
+use subprocess::Exec;
 
 pub fn check_arguments(
     path: &Option<PathBuf>,
@@ -43,16 +44,19 @@ fn main() {
         |path| Config::load_from_file(&path).unwrap(),
     );
 
-    let observer = Observer::new(observer_config.clone());
+    let mut observer = Observer::new(observer_config.clone());
     println!("🤖 Starting observer...");
     loop {
         match observer.iter_events().next() {
             Some(EventFiles::Created(file)) => println!("📁 New file detected: {:?}", file.name()),
-            Some(EventFiles::Modified(file)) => println!(
-                "📑 Changes on file: {:?}\n🚀 Executing: {}",
-                file.ds_path(),
-                observer_config.clone().exec()
-            ),
+            Some(EventFiles::Modified(file)) => {
+                println!(
+                    "📑 Changes on file: {:?}\n🚀 Executing: {}",
+                    file.ds_path(),
+                    observer_config.clone().exec()
+                );
+                let _cmd = Exec::shell(observer_config.exec()).popen();
+            }
             Some(EventFiles::Eliminated(file)) => println!("🗑️ Removed file: {:?}", file.name()),
             None => {}
         }
