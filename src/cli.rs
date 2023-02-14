@@ -1,10 +1,12 @@
+use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 use structopt::StructOpt;
-use serde::{Serialize, Deserialize};
-
 
 #[derive(StructOpt, Debug, Serialize, Deserialize)]
-#[structopt(name = "Observe", about = "A file watcher system to detect changes in your project.")]
+#[structopt(
+    name = "Observe",
+    about = "A file watcher system to detect changes in your project."
+)]
 #[allow(dead_code)]
 pub struct CommandArguments {
     #[structopt(short, long, parse(from_os_str))]
