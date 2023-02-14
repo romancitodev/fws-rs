@@ -40,15 +40,20 @@ fn main() {
         exit(1);
     }
     let observer_config = config.map_or_else(
-        || Config::load_from_args(path.unwrap(), exe.unwrap(), recursive),
+        || Config::load_from_args(path.unwrap(), exe.clone().unwrap(), recursive),
         |path| Config::load_from_file(&path).unwrap(),
     );
 
     let mut observer = Observer::new(observer_config.clone());
     println!("🤖 Starting observer...");
+
+    let _cmd = Exec::shell(observer_config.exec()).popen();
+
     loop {
         match observer.iter_events().next() {
-            Some(EventFiles::Created(file)) => println!("📁 New file detected: {:?}", file.name()),
+            Some(EventFiles::Created(file)) => {
+                println!("📁 New file detected: {:?}", file.ds_path())
+            }
             Some(EventFiles::Modified(file)) => {
                 println!(
                     "📑 Changes on file: {:?}\n🚀 Executing: {}",
@@ -57,7 +62,7 @@ fn main() {
                 );
                 let _cmd = Exec::shell(observer_config.exec()).popen();
             }
-            Some(EventFiles::Eliminated(file)) => println!("🗑️ Removed file: {:?}", file.name()),
+            Some(EventFiles::Eliminated(file)) => println!("🗑️ Removed file: {:?}", file.ds_path()),
             None => {}
         }
     }
