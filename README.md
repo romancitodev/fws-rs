@@ -39,6 +39,15 @@ Once you have the program builded or downloaded from the most recently release, 
 fws-rs --config "config.json"
 ```
 
+(You must need to create a `config.json` file like this)
+```json
+{
+    "path": "your/path", // the path you want to observe.
+    "exec": "python main.py", // the command you want to be execute when apply changes on files.
+    "recursive": true | false // if you want to look specific path or recursive.
+}
+```
+
 2. Using configuration arguments:
 
 ```bash
