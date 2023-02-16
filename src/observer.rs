@@ -12,8 +12,8 @@ pub struct Observer {
 impl Observer {
     pub fn new(config: Config) -> Self {
         let files = match config.is_recursive() {
-            true => WalkDir::new(&config.path()).min_depth(1),
-            false => WalkDir::new(&config.path()).min_depth(1).max_depth(1),
+            true => WalkDir::new(config.path()).min_depth(1),
+            false => WalkDir::new(config.path()).min_depth(1).max_depth(1),
         }
         .into_iter()
         .filter(|x| x.as_ref().unwrap().metadata().unwrap().is_file())
