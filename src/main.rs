@@ -12,7 +12,7 @@ use events::EventFiles;
 use observer::Observer;
 use std::{path::PathBuf, process::exit};
 use structopt::StructOpt;
-use subprocess::Exec;
+use subprocess::{Exec, Popen};
 
 pub fn check_arguments(
     path: &Option<PathBuf>,
@@ -34,20 +34,24 @@ fn main() {
         exec: exe,
         config,
         recursive,
+        on_events_only
     } = CommandArguments::from_args();
     if let Err(err) = check_arguments(&path, &exe, &config) {
         println!("{:?}", err);
         exit(1);
     }
     let observer_config = config.map_or_else(
-        || Config::load_from_args(path.unwrap(), exe.clone().unwrap(), recursive),
+        || Config::load_from_args(path.unwrap(), exe.clone().unwrap(), recursive, on_events_only),
         |path| Config::load_from_file(&path).unwrap(),
     );
 
     let mut observer = Observer::new(observer_config.clone());
     println!("🤖 Starting observer...");
+    let mut cmd:Option<Popen> = None;
 
-    let _cmd = Exec::shell(observer_config.exec()).popen();
+    if !observer_config.reload_on_events() {
+        let _cmd = Some(Exec::shell(observer_config.exec()).popen().unwrap());
+    }
 
     loop {
         match observer.iter_events().next() {
@@ -60,7 +64,10 @@ fn main() {
                     file.ds_path(),
                     observer_config.clone().exec()
                 );
-                let _cmd = Exec::shell(observer_config.exec()).popen();
+                if let Some(mut command) = cmd {
+                    command.kill().unwrap();
+                }
+                cmd = Some(Exec::shell(observer_config.exec()).popen().unwrap());
             }
             Some(EventFiles::Eliminated(file)) => println!("🗑️ Removed file: {:?}", file.ds_path()),
             None => {}
