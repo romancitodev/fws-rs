@@ -14,6 +14,7 @@ struct JsonFile {
     watch: PathBuf,
     exec: String,
     recursive: bool,
+    on_events_only: bool
 }
 
 #[derive(Debug)]
@@ -39,11 +40,12 @@ pub struct Config {
     path: PathBuf,
     exec: String,
     recursive: CheckMode,
+    only_on_events: bool
 }
 
 #[allow(dead_code)]
 impl Config {
-    pub fn new(path: PathBuf, exec: String, recursive: bool) -> Self {
+    pub fn new(path: PathBuf, exec: String, recursive: bool, only_on_events: bool) -> Self {
         let recursive = match recursive {
             true => CheckMode::Recursive,
             false => CheckMode::NonRecursive,
@@ -52,26 +54,31 @@ impl Config {
             path,
             exec,
             recursive,
+            only_on_events
         }
     }
 
-    pub fn path(self: &Self) -> &PathBuf {
+    pub fn path(&self) -> &PathBuf {
         &self.path
     }
 
-    pub fn exec(self: &Self) -> &String {
+    pub fn exec(&self) -> &String {
         &self.exec
     }
 
-    pub fn is_recursive(self: &Self) -> bool {
+    pub fn is_recursive(&self) -> bool {
         match &self.recursive {
             CheckMode::Recursive => true,
             CheckMode::NonRecursive => false,
         }
     }
 
-    pub fn load_from_args(path: PathBuf, exec: String, recursive: bool) -> Self {
-        Config::new(path, exec, recursive)
+    pub fn reload_on_events(&self) -> bool {
+        self.only_on_events
+    }
+
+    pub fn load_from_args(path: PathBuf, exec: String, recursive: bool, only_on_events: bool) -> Self {
+        Config::new(path, exec, recursive, only_on_events)
     }
 
     pub fn load_from_file(path: &PathBuf) -> Result<Self, Box<dyn Error>> {
@@ -81,6 +88,7 @@ impl Config {
             PathBuf::from(&config.watch),
             config.exec,
             config.recursive,
+            config.on_events_only
         ))
     }
 }
