@@ -34,6 +34,16 @@ impl File {
         Arc::new(&self.name).to_string()
     }
 
+    pub fn extension(&self) -> String {
+        let binding = self.name.to_string();
+        let extensions = binding
+            .split('.')
+            .collect::<Vec<_>>()
+            .drain(1..)
+            .collect::<Vec<_>>();
+        format!(".{}", extensions.join("."))
+    }
+
     pub fn ds_path(&self) -> String {
         Arc::new(&self.path)
             .to_path_buf()
