@@ -1,7 +1,10 @@
 fixes:
     ✔ kill processes on reload.
-
+    - fix execute loop.
 features:
-    - add input to execute commands like "rs" to restart the command or "exit" to kill it clean.
+    ✔ add input to execute commands like "rs" to restart the command or "exit" to kill it clean.
     ✔ add CLI arg "--on-events-only" to prevent execution loops. (default false)
-    - add CLI arg "--patterns" to watch only files with specific extension. (default None)
+    ✔ add CLI arg "--patterns" to watch only files with specific extension. (default empty Vec<String>)
+    ✔ add CLI arg "--attempts" to retry when programm fails. (default 3)
+    ✔ add handler to Ctrl C sig.
+    - add tests to test all the features.
