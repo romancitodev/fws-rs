@@ -13,6 +13,7 @@ fws-rs is an application written in rust that acts as a configurable file watche
 - Execute custom commands
 - Configuration via JSON file or command line arguments
 - Recursive directory watching
+- Observe custom files with patterns extensions
 ## 🚀 Getting started
 ### 📥 Installation
 
@@ -44,7 +45,9 @@ fws-rs --config "config.json"
 {
     "watch": "your/path", // the path you want to observe.
     "exec": "python main.py", // the command you want to be execute when apply changes on files.
-    "recursive": true | false // if you want to look specific path or recursive.
+    "recursive": true | false // if you want to look specific path or recursive (default False).
+    "on_events_only": true, // if you want to execute commands only if ocurrs an event (default False).
+    "patterns: [".rs", ".py", ".js"] // your .extensions (default []).
 }
 ```
 
@@ -59,14 +62,14 @@ fws-rs --watch "your/path" --exec "your script"
 
 Executing with different configs
 
-![image](https://user-images.githubusercontent.com/84428770/218912861-7281f391-527e-42d0-acd4-350c7541507a.png)
+![image](https://user-images.githubusercontent.com/84428770/220008335-7b6bb319-0bf2-45ac-b3da-463a94b082f4.png)
 
-![image](https://user-images.githubusercontent.com/84428770/218913004-f30a16af-f826-4a47-9676-769c8d2761c5.png)
+![image](https://user-images.githubusercontent.com/84428770/220008772-ecf6a201-dbd1-4088-80d7-46a6a7b74e22.png)
 
 
 Different logs:
 
-![image](https://user-images.githubusercontent.com/84428770/218913462-b55ef98b-d2b0-48ba-a1d1-adcfcad6876d.png)
+![image](https://user-images.githubusercontent.com/84428770/220009127-f6cf611d-3e32-48af-bf1a-ea9ae7225bdc.png)
 
 
 ## 💼 License
