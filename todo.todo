@@ -1,6 +1,6 @@
 fixes:
     ✔ kill processes on reload.
-    - fix execute loop.
+    ✔ fix execute loop.
 features:
     ✔ add input to execute commands like "rs" to restart the command or "exit" to kill it clean.
     ✔ add CLI arg "--on-events-only" to prevent execution loops. (default false)
