@@ -1,5 +1,7 @@
 {
-    "watch": ".\\src",
-    "exec": "python main.py",
-    "recursive": true
+    "watch": "./",
+    "exec": "python commands/server.py",
+    "on_events_only": true,
+    "recursive": true,
+    "patterns": [".rs", ".py", ".js"]
 }
