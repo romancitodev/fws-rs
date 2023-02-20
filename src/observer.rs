@@ -9,33 +9,45 @@ pub struct Observer {
     config: Config,
     files: HashMap<String, File>,
 }
+
+fn get_files(config: &Config) -> HashMap<String, File> {
+    let files = match config.is_recursive() {
+        true => WalkDir::new(config.path()).min_depth(1),
+        false => WalkDir::new(config.path()).min_depth(1).max_depth(1),
+    }
+    .into_iter()
+    .filter(|x| x.as_ref().unwrap().metadata().unwrap().is_file())
+    .map(|x| File::new(&x.unwrap()))
+    .map(|f| (f.name(), f))
+    .collect::<HashMap<_, _>>();
+
+    if config.patterns().is_empty() {
+        return files
+    }
+    let mut filtered_files = HashMap::new();
+    for (name, file) in files {
+        let ext = file.extension();
+        if config.patterns().contains(&ext) {
+            filtered_files.insert(name, file);
+        }
+    }
+    filtered_files
+}
+
 impl Observer {
     pub fn new(config: Config) -> Self {
-        let files = match config.is_recursive() {
-            true => WalkDir::new(config.path()).min_depth(1),
-            false => WalkDir::new(config.path()).min_depth(1).max_depth(1),
+        Observer {
+            files: get_files(&config),
+            config,
         }
-        .into_iter()
-        .filter(|x| x.as_ref().unwrap().metadata().unwrap().is_file())
-        .map(|x| File::new(&x.unwrap()))
-        .map(|f| (f.name(), f))
-        .collect::<HashMap<_, _>>();
-        Observer { config, files }
     }
 
     pub fn iter_events(&mut self) -> impl Iterator<Item = EventFiles> + '_ {
         let interval = Duration::from_millis(500);
         let last_files = self.files.clone();
         std::iter::from_fn(move || {
-            let current_files = match self.config.is_recursive() {
-                true => WalkDir::new(self.config.path()).min_depth(1),
-                false => WalkDir::new(self.config.path()).min_depth(1).max_depth(1),
-            }
-            .into_iter()
-            .filter(|x| x.as_ref().unwrap().metadata().unwrap().is_file())
-            .map(|x| File::new(&x.unwrap()))
-            .map(|f| (f.name(), f))
-            .collect::<HashMap<String, File>>();
+            let current_files = get_files(&self.config);
+
             let mut events = Vec::new();
             for (name, file) in current_files.iter() {
                 if let Some(last_file) = last_files.get(name) {
