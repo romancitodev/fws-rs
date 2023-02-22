@@ -1,0 +1,7 @@
+{
+    "watch": "./",
+    "exec": "python commands/server.py",
+    "on_events_only": true,
+    "non_recursive": true,
+    "patterns": [".rs", ".py", ".js"]
+}
