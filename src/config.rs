@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use walkdir::WalkDir;
+use walkdir::{WalkDir};
 use std::convert::From;
 use std::env;
 use std::error::Error;
