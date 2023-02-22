@@ -1,13 +1,9 @@
 use serde::{Deserialize, Serialize};
+use walkdir::WalkDir;
 use std::convert::From;
+use std::env;
 use std::error::Error;
 use std::{fs::File, path::PathBuf};
-
-#[derive(Debug, Clone)]
-pub enum CheckMode {
-    Recursive,
-    NonRecursive,
-}
 
 #[derive(Serialize, Deserialize, Clone)]
 
@@ -51,7 +47,7 @@ impl Error for ConfigError {}
 pub struct Config {
     path: PathBuf,
     exec: String,
-    recursive: CheckMode,
+    recursive: bool,
     only_on_events: bool,
     patterns: Vec<String>,
 }
@@ -65,10 +61,6 @@ impl Config {
         only_on_events: bool,
         patterns: Vec<String>,
     ) -> Self {
-        let recursive = match recursive {
-            true => CheckMode::Recursive,
-            false => CheckMode::NonRecursive,
-        };
         Config {
             path,
             exec,
@@ -87,10 +79,7 @@ impl Config {
     }
 
     pub fn is_recursive(&self) -> bool {
-        match &self.recursive {
-            CheckMode::Recursive => true,
-            CheckMode::NonRecursive => false,
-        }
+        self.recursive
     }
 
     pub fn only_events(&self) -> bool {
@@ -121,5 +110,13 @@ impl Config {
             config.on_events_only.unwrap_or(false),
             config.patterns.unwrap_or(Vec::<String>::new()),
         ))
+    }
+}
+
+pub fn get_config_file() -> Option<PathBuf> {
+    let root = env::current_dir().unwrap();
+    match WalkDir::new(root).into_iter().find(|x| x.as_ref().unwrap().file_name().to_str() == Some(&"observer.json")) {
+        Some(file) => Some(file.unwrap().into_path()),
+        None => None
     }
 }
