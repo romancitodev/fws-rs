@@ -1,22 +1,18 @@
 mod cli;
 mod config;
-mod error;
-mod events;
 mod file;
-mod observer;
 
+use crate::file::*;
+use crate::cli::*;
 use clap::Parser;
-use cli::CommandArguments;
+use cli::Args;
 use config::Config;
+use config::get_config_file;
 use ctrlc::set_handler;
-use error::ArgumentsError;
-use events::EventFiles;
-use observer::Observer;
 use std::{
     error::Error,
     ffi::OsStr,
     io::Write,
-    path::PathBuf,
     process::exit,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -34,19 +30,6 @@ lazy_static! {
         Arc::new((Mutex::new(false), Condvar::new()));
 }
 
-pub fn check_arguments(
-    path: &Option<PathBuf>,
-    exe: &Option<String>,
-    config: &Option<PathBuf>,
-) -> Result<(), ArgumentsError> {
-    match (path.is_some(), exe.is_some(), config.is_some()) {
-        (true, _, true) | (_, true, true) => Err(ArgumentsError::UnexpectedCommands),
-        (false, true, _) | (true, false, _) | (false, false, false) => {
-            Err(ArgumentsError::MissingCommands)
-        }
-        (_, _, _) => Ok(()),
-    }
-}
 fn execute(command: &impl AsRef<OsStr>, attempts: usize) -> Result<Popen, String> {
     for i in 1..=attempts {
         let mut cmd = Exec::shell(command).popen().expect("a new process handler");
@@ -93,29 +76,25 @@ fn restart(observer: &Arc<Mutex<Option<JoinHandle<()>>>>, terminate: &Arc<Atomic
 fn create_observer_thread(terminate: Arc<AtomicBool>) -> JoinHandle<()> {
     std::thread::spawn(move || {
         let shutdown = SHUTDOWN.clone();
-        let CommandArguments {
-            watch: path,
-            exec: exe,
-            config,
-            recursive,
-            on_events_only,
-            attempts,
-            patterns,
-        } = CommandArguments::parse();
 
-        if let Err(err) = check_arguments(&path, &exe, &config) {
-            println!("{:?}", err);
-            exit(1);
-        }
+        let args = match check_arguments(Args::parse()) {
+            Ok(args) => args,
+            Err(error) => {
+                println!("{}", error.msg);
+                exit(1);
+            }
+        };
 
-        let observer_config = config.map_or_else(
+        let args_clone = args.clone();
+
+        let observer_config = args_clone.config.map_or_else(
             || {
                 Config::load_from_args(
-                    path.unwrap(),
-                    exe.clone().unwrap(),
-                    recursive,
-                    on_events_only,
-                    patterns,
+                    args_clone.watch.unwrap(),
+                    args_clone.exec.clone().unwrap(),
+                    args_clone.non_recursive,
+                    args_clone.on_events_only,
+                    args_clone.patterns,
                 )
             },
             |path| Config::load_from_file(&path).unwrap(),
@@ -126,15 +105,15 @@ fn create_observer_thread(terminate: Arc<AtomicBool>) -> JoinHandle<()> {
         println!("🤖 Starting observer...");
          let mut cmd: Option<Popen> = None;
         if !observer_config.only_events() {
-            cmd = Some(try_execute(&observer_config.exec(), attempts));
+            cmd = Some(try_execute(&observer_config.exec(), args_clone.attempts));
         }
         loop {
             match observer.iter_events().next() {
-                Some(EventFiles::Created(file)) => {
+                Some(FileEvent::Created(file)) => {
                     flush_console();
                     println!("📁 New file detected: {:?}", file.ds_path())
                 }
-                Some(EventFiles::Modified(file)) => {
+                Some(FileEvent::Modified(file)) => {
                     flush_console();
                     println!(
                         "📑 Changes on file: {:?}\n🚀 Executing: {}",
@@ -144,9 +123,9 @@ fn create_observer_thread(terminate: Arc<AtomicBool>) -> JoinHandle<()> {
                     if let Some(mut command) = cmd {
                         command.kill().unwrap();
                     } //
-                    cmd = Some(try_execute(&observer_config.exec(), attempts));
+                    cmd = Some(try_execute(&observer_config.exec(), args_clone.attempts));
                 }
-                Some(EventFiles::Eliminated(file)) => {
+                Some(FileEvent::Eliminated(file)) => {
                     flush_console();
                     println!("🗑️ Removed file: {:?}", file.ds_path())
                 }
@@ -170,6 +149,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         std::process::exit(0);
     })
     .unwrap();
+
+    let _file = get_config_file();
 
     let observer_terminate = Arc::new(AtomicBool::new(false));
     let observer = Arc::new(Mutex::new(Some(create_observer_thread(
