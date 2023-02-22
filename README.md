@@ -47,7 +47,7 @@ fws-rs --config "config.json"
     "exec": "python main.py", // the command you want to be execute when apply changes on files.
     "recursive": true | false // if you want to look specific path or recursive (default False).
     "on_events_only": true, // if you want to execute commands only if ocurrs an event (default False).
-    "patterns: [".rs", ".py", ".js"] // your .extensions (default []).
+    "patterns": ['.rs', '.py', '.js'] // your .extensions (default is []).
 }
 ```
 
