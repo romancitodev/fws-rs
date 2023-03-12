@@ -1,0 +1,15 @@
+{
+    "watcher_config": {
+        "path": "./",
+        "recursive": true,
+        "patterns": [
+            ".rs",
+            ".py"
+        ],
+        "interval": "100ms"
+    },
+    "commands": [
+        "echo hello world",
+        "echo good bye"
+    ]
+}
