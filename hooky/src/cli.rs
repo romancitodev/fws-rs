@@ -2,11 +2,11 @@ use clap::Parser;
 use serde::{Deserialize, Serialize};
 use std::path::PathBuf;
 
-use crate::config::get_config_file;
+use crate::watcher::get_config_file;
 
 #[derive(Parser, Debug, Serialize, Deserialize, Clone)]
 #[command(
-    name = "Observe",
+    name = "Hooky",
     about = "A file watcher system to detect changes in your project.",
     rename_all = "kebab-case"
 )]
@@ -37,11 +37,10 @@ pub struct Args {
         short,
         long,
         default_values_t = Vec::<String>::new(),
-        help = "the patterns to observe. Example: [rs, ts, jsx]"
+        help = "the patterns to observe. Example: [.rs, .ts, .jsx]"
     )]
     pub patterns: Vec<String>,
 }
-
 
 #[derive(Debug)]
 pub enum ArgsErrorKind {
@@ -51,24 +50,36 @@ pub enum ArgsErrorKind {
 
 pub struct ArgsError {
     pub kind: ArgsErrorKind,
-    pub msg: String
+    pub msg: String,
 }
 
 pub fn check_arguments(args: Args) -> Result<Args, ArgsError> {
     match (&args.config, &args.exec, &args.watch) {
-        (Some(_),Some(_) , _) => return Err(ArgsError {kind: ArgsErrorKind::UnexpectedArgument, msg: "Invalid argument if --config is active (exec)".into()}),
-        (Some(_), _, Some(_)) => return Err(ArgsError {kind: ArgsErrorKind::UnexpectedArgument, msg: "Invalid argument if --config is active (watch)".into()}),
-        (None, None, Some(_)) => return Err(ArgsError {kind: ArgsErrorKind::MissingArgument, msg: "Missing argument (exec)".into()}),
-        (None, Some(_), None) => return Err(ArgsError {kind: ArgsErrorKind::MissingArgument, msg: "Missing argument (watch)".into()}),
-        (None, None, None) => return Ok(Args {
+        (Some(_), Some(_), _) => Err(ArgsError {
+            kind: ArgsErrorKind::UnexpectedArgument,
+            msg: "Invalid argument if --config is active (exec)".into(),
+        }),
+        (Some(_), _, Some(_)) => Err(ArgsError {
+            kind: ArgsErrorKind::UnexpectedArgument,
+            msg: "Invalid argument if --config is active (watch)".into(),
+        }),
+        (None, None, Some(_)) => Err(ArgsError {
+            kind: ArgsErrorKind::MissingArgument,
+            msg: "Missing argument (exec)".into(),
+        }),
+        (None, Some(_), None) => Err(ArgsError {
+            kind: ArgsErrorKind::MissingArgument,
+            msg: "Missing argument (watch)".into(),
+        }),
+        (None, None, None) => Ok(Args {
             config: Some(get_config_file().unwrap()),
             watch: None,
             exec: None,
             non_recursive: args.non_recursive,
             on_events_only: args.on_events_only,
             attempts: !args.attempts,
-            patterns: args.patterns
+            patterns: args.patterns,
         }),
-        (Some(_), None, None) | (None, Some(_), Some(_)) => return Ok(args)
-    };
+        (Some(_), None, None) | (None, Some(_), Some(_)) => Ok(args),
+    }
 }

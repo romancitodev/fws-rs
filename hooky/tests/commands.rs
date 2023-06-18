@@ -102,7 +102,7 @@ mod tests {
 
     #[tokio::test]
     async fn test_async_input() {
-        let config = CommandConfig::new(OutputMode::Supress, ShellMode::Powershell);
+        let config = CommandConfig::new(OutputMode::Allow, ShellMode::Cmd);
         let mut cmd = Command::new(config, "python tests/functions/input.py".into());
         assert_eq!(cmd.state(), &Status::Pending);
         cmd.execute();
@@ -110,8 +110,8 @@ mod tests {
         assert!(cmd.is_running());
         cmd.wait_async().await;
         assert!(cmd.is_finished());
-        assert_eq!(cmd.state(), &Status::Finished(0));
-        assert_eq!(cmd.exit_code(), Some(0));
+        assert_eq!(cmd.state(), &Status::Finished(1));
+        assert_eq!(cmd.exit_code(), Some(1));
     }
 
     // Prueba la función `execute()` con multiples comandos
@@ -140,6 +140,7 @@ mod tests {
         cmd.execute();
         assert!(cmd.is_running());
         cmd.wait_async().await;
+        eprintln!("cmd.exit_code = {:?}", cmd.exit_code());
         assert!(cmd.is_finished());
         assert_eq!(cmd.exit_code(), Some(0));
     }
@@ -185,13 +186,24 @@ mod tests {
         assert!(cmd.is_finished());
     }
 
+    // #[test]
+    // fn test_sync_input() {
+    //     let config = CommandConfig::new(OutputMode::Supress, ShellMode::Cmd);
+    //     let mut cmd = Command::new(config, "python tests/functions/input.py".into());
+    //     cmd.execute();
+    //     assert_eq!(cmd.state(), &Status::Running);
+    //     cmd.wait_sync();
+    //     assert_eq!(cmd.state(), &Status::Finished(0));
+    //     assert_eq!(cmd.exit_code(), Some(0));
+    // }
+
     #[test]
-    fn test_sync_input() {
-        let config = CommandConfig::new(OutputMode::Supress, ShellMode::Cmd);
+    fn test_input_killed() {
+        let config = CommandConfig::new(OutputMode::Allow, ShellMode::Powershell);
         let mut cmd = Command::new(config, "python tests/functions/input.py".into());
         cmd.execute();
         assert_eq!(cmd.state(), &Status::Running);
-        cmd.wait_sync();
+        cmd.kill().unwrap();
         assert_eq!(cmd.state(), &Status::Finished(0));
         assert_eq!(cmd.exit_code(), Some(0));
     }

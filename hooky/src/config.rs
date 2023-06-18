@@ -29,7 +29,7 @@ impl CommandConfig {
 impl Default for CommandConfig {
     fn default() -> Self {
         Self {
-            supress_output: OutputMode::Allow,
+            supress_output: OutputMode::Piped,
             shell_mode: ShellMode::Cmd,
         }
     }
@@ -48,6 +48,7 @@ pub enum ShellMode {
 pub enum OutputMode {
     Supress,
     Allow,
+    Piped,
 }
 
 #[derive(Deserialize)]

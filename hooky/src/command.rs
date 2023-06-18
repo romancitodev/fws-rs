@@ -49,10 +49,13 @@ pub struct Command {
 
 #[allow(dead_code)]
 impl Command {
-    pub fn new(config: CommandConfig, code: String) -> Self {
-        let mut command = code.split(' ').map(|f| f.to_string()).collect::<Vec<_>>();
-        let name = command[0].to_owned();
-        let args = command.drain(1..).collect::<Vec<String>>();
+    pub fn new(config: CommandConfig, command: String) -> Self {
+        let mut fixed_command = command
+            .split(' ')
+            .map(|f| f.to_string())
+            .collect::<Vec<_>>();
+        let name = fixed_command[0].to_owned();
+        let args = fixed_command.drain(1..).collect::<Vec<String>>();
         Self {
             name,
             args,
@@ -101,7 +104,7 @@ impl Command {
         self.config = config
     }
 
-    /// ejecuta el `child`
+    /// ejecuta el `[child]`
     pub fn execute(&mut self) {
         if self.is_running() {
             return;
@@ -118,8 +121,13 @@ impl Command {
             args = self.args.join(" ")
         )]);
         if self.config.output_mode() == OutputMode::Supress {
+            child.stdin(Stdio::null());
             child.stdout(Stdio::null());
             child.stderr(Stdio::null());
+        } else if self.config.output_mode() == OutputMode::Piped {
+            child.stdin(Stdio::piped());
+            child.stdout(Stdio::inherit());
+            child.stderr(Stdio::inherit());
         }
         match child.spawn() {
             Ok(e) => {
@@ -171,7 +179,7 @@ impl Command {
         if self.child.is_none() || matches!(self.state, Status::Pending | Status::Finished(_)) {
             return Err(CommandError {
                 kind: CommandErrorKind::ExecutionFinalizated,
-                msg: "command killed yet".into(),
+                msg: "command killed already".into(),
             });
         };
         match self.child.as_mut().unwrap().kill() {

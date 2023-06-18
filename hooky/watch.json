@@ -6,10 +6,12 @@
             ".rs",
             ".py"
         ],
-        "interval": "100ms"
+        "interval": "1s",
+        "number": 1
     },
     "commands": [
         "echo hello world",
+        "python hooky/tests/functions/input.py",
         "echo good bye"
     ]
 }

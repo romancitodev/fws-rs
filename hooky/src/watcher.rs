@@ -12,9 +12,8 @@ use std::{
 use tokio::sync::mpsc::{channel, Receiver, Sender};
 use walkdir::WalkDir;
 
-use crate::command::{CommandError, CommandErrorKind};
 use crate::{
-    command::Command,
+    command::{Command, CommandError, CommandErrorKind},
     config::{SupervisorConfig, WatcherConfig},
     file::{File, FileEvent},
 };
@@ -103,18 +102,11 @@ impl Supervisor {
                         Some(FileEvent::Modified(file)) => {
                             flush_console();
                             println!("watcher detected changes in: {:?}", file.path());
-                            // vamos a hacer un for para ejecutar cada comando de forma individual. (unicamente ejecutamos el `execute`)
-                            for command in &mut self.commands {
-                                println!("executing: {} ", command);
-                                command.execute()
-                            }
                             let path = get_config_file().unwrap();
                             let reader = BufReader::new(FsFile::open(path).unwrap());
-                            let supervisor_config: SupervisorConfig =
-                                serde_json::from_reader(reader).unwrap();
-                                self.reconfigure(supervisor_config);
+                            let supervisor_config: SupervisorConfig = serde_json::from_reader(reader).unwrap();
+                            self.reconfigure(supervisor_config);
                             self.execute_commands();
-                            println!("{:?}", self.watcher.interval)
                         }
                         Some(FileEvent::Eliminated(file)) => {
                             flush_console();
@@ -133,8 +125,8 @@ impl Supervisor {
 
     pub async fn listen(&mut self) {
         use tokio::signal::ctrl_c;
-        ctrl_c().await.unwrap();
-        self.sender.send(()).await.unwrap();
+        ctrl_c().await.expect("failed to listen for event");
+        self.sender.send(()).await.expect("signal cannot be sended");
     }
 
     /// va a parar todos los comandos que tenga corriendo.
@@ -161,8 +153,8 @@ impl Supervisor {
             println!("killing: {:?}", command.name());
             match command.kill() {
                 Ok(_) => (),
-                Err(_) => {
-                    println!("error...")
+                Err(err) => {
+                    println!("error... {:?}", err)
                 }
             }
         }
@@ -183,7 +175,7 @@ impl Supervisor {
     }
 }
 
-fn get_config_file() -> Option<PathBuf> {
+pub fn get_config_file() -> Option<PathBuf> {
     let root = env::current_dir().unwrap();
     WalkDir::new(root)
         .into_iter()
@@ -213,7 +205,15 @@ impl Watcher {
     }
 
     pub fn start(&mut self) {
-        self.files = Some(self.get_files())
+        self.files = Some(self.get_files());
+        let a_number = Option::Some(10);
+        match a_number {
+            Some(x) if x <= 5 => println!("0 to 5 num = {x}"),
+            Some(x @ 6..=10) => println!("6 to 10 num = {x}"),
+            None => panic!(),
+            // all other numbers
+            _ => panic!(),
+        }
     }
 
     /// ## `[get_events]`
